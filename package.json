@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "fetch": "node src/fetch.js",
-    "build": "node src/build.js --banner-only",
-    "drafts": "node src/build.js",
-    "update": "node src/fetch.js && node src/build.js --banner-only"
+    "build": "node src/build.js",
+    "update": "node src/fetch.js && node src/build.js",
+    "drafts": "node src/build-drafts.js"
   }
 }

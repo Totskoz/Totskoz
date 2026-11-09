@@ -1,7 +1,7 @@
 // 花見 — pixel-art cherry blossom park. One sakura tree per month (fuller bloom = more
 // commits), the calendar is a petal-strewn lawn, cats nap under the three busiest months,
 // and a little sprout spirit bounces on your single best day.
-import { rng, fmt, MONTHS } from '../lib.js';
+import { rng, fmt, MONTHS } from './lib.js';
 
 const PW = 212, PH = 91, S = 4; // pixel grid, scale
 const GROUND = 55, GRID_Y = 62;

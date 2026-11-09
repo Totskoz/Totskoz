@@ -1,3 +1,7 @@
 node_modules/
 # raw API responses stay local
 data/
+# style explorations stay local
+drafts/
+src/drafts/
+src/build-drafts.js
