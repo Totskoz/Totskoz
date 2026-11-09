@@ -25,8 +25,7 @@ const drafts = [
 // the banner used by README.md
 fs.mkdirSync(path.join(root, 'assets'), { recursive: true });
 fs.writeFileSync(path.join(root, 'assets', 'hanami.svg'), hanami(data));
-fs.writeFileSync(path.join(root, 'assets', 'hanami-dark.svg'), hanami(data, 'night'));
-console.log('assets/hanami.svg, assets/hanami-dark.svg');
+console.log('assets/hanami.svg');
 if (process.argv.includes('--banner-only')) process.exit(0);
 
 for (const [id, , , fn] of drafts) {
