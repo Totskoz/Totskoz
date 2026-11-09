@@ -27,7 +27,7 @@ class Canvas {
         const c = this.p[y][x];
         let n = 1;
         while (x + n < this.w && this.p[y][x + n] === c) n++;
-        if (c) (by[c] ||= []).push(`M${x} ${y}h${n}v1h-${n}z`);
+        if (c) (by[c] ||= []).push(`M${x} ${y}h${n}.06v1.06h-${n}.06z`);
         x += n;
       }
     }
@@ -258,7 +258,7 @@ export default function hanami(data, theme = 'day') {
 
   const cloud = `<g class="cloud" transform="translate(0 20)">${draw(13, 5, (c) => c.sprite(0, 0, CLOUD, { '#': '#ffffff' }))}</g>`;
 
-  const out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PW} ${PH}" width="${PW * S}" height="${PH * S}" shape-rendering="crispEdges" role="img" aria-label="${data.login}'s year of commits as a pixel-art cherry blossom park with cats">
+  const out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PW} ${PH}" width="${PW * S}" height="${PH * S}" role="img" aria-label="${data.login}'s year of commits as a pixel-art cherry blossom park with cats">
 <defs><clipPath id="card"><rect width="${PW}" height="${PH}" rx="2"/></clipPath></defs>
 <style>
   .f0,.f1,.f2,.f3{animation:fall0 9s steps(36) infinite}

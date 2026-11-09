@@ -1,10 +1,3 @@
-<div align="right">
-  <details>
-    <summary>🌙</summary>
-    <img src="./assets/hanami-dark.svg" width="100%" alt="Night version of the banner: the same cherry blossom park under a moon, with lanterns in the trees.">
-  </details>
-</div>
-
 <p align="center">
   <img src="./assets/hanami.svg" width="100%" alt="A pixel-art cherry blossom park drawn from my GitHub contributions: one sakura tree per month, a lawn tile per day, and cats napping under the busiest months.">
 </p>
