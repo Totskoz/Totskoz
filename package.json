@@ -1,0 +1,11 @@
+{
+  "name": "github-profile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch": "node src/fetch.js",
+    "build": "node src/build.js --banner-only",
+    "drafts": "node src/build.js",
+    "update": "node src/fetch.js && node src/build.js --banner-only"
+  }
+}
