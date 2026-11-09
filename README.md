@@ -1,12 +1,12 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/hanami-dark.svg">
-    <img src="./assets/hanami.svg" width="100%" alt="A pixel-art cherry blossom park drawn from my GitHub contributions: one sakura tree per month, a lawn tile per day, and cats napping under the busiest months.">
-  </picture>
-</p>
+<div align="right">
+  <details>
+    <summary>🌙</summary>
+    <img src="./assets/hanami-dark.svg" width="100%" alt="Night version of the banner: the same cherry blossom park under a moon, with lanterns in the trees.">
+  </details>
+</div>
 
 <p align="center">
-  <sub>🌸 One tree per month · one lawn tile per day · cats nap under the three busiest months · the sprout hops on my best day.<br>Redrawn every day from my contribution calendar.</sub>
+  <img src="./assets/hanami.svg" width="100%" alt="A pixel-art cherry blossom park drawn from my GitHub contributions: one sakura tree per month, a lawn tile per day, and cats napping under the busiest months.">
 </p>
 
 <!--
