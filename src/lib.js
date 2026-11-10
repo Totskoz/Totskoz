@@ -2,6 +2,8 @@ import fs from 'node:fs';
 
 export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+export const DAY_CUTS = [3, 10, 30];
+
 export function load(file) {
   const d = JSON.parse(fs.readFileSync(file, 'utf8')).data;
   const v = d.user || d.viewer;
@@ -19,11 +21,9 @@ export function load(file) {
   }
   const bestDay = days.reduce((a, d) => (d.count > a.count ? d : a), days[0]);
 
-  // quartile levels (0-4) over active days, like GitHub's own colouring
-  const active = days.filter((d) => d.count > 0).map((d) => d.count).sort((a, b) => a - b);
-  const q = (p) => active[Math.min(active.length - 1, Math.floor(p * active.length))] ?? 1;
-  const cuts = [q(0.25), q(0.5), q(0.75)];
-  for (const d of days) d.level = d.count === 0 ? 0 : 1 + cuts.filter((c) => d.count > c).length;
+  // fixed levels (0-4), so a quiet year looks quiet: 1-3, 4-10, 11-30, 31+ contributions
+  const active = days.filter((d) => d.count > 0);
+  for (const d of days) d.level = d.count === 0 ? 0 : 1 + DAY_CUTS.filter((c) => d.count > c).length;
 
   // first week index of each month, for labels
   const monthStarts = [];

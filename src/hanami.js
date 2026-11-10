@@ -111,6 +111,7 @@ const NIGHT = {
 };
 const recolor = (svg, map) => svg.replace(/fill="(#[0-9a-f]{6})"/g, (m, c) => `fill="${map[c] || c}"`);
 
+const FULL_MONTH = 600;
 const LAWN = ['#6fb86c', '#fbd9e5', '#f8b1c9', '#ef82aa', '#d9548b'];
 
 export default function hanami(data, theme = 'day') {
@@ -125,9 +126,12 @@ export default function hanami(data, theme = 'day') {
     if (!m || m.key !== key) months.push((m = { key, month: +key.slice(5) - 1, total: 0, wsum: 0, n: 0 }));
     m.total += d.count; m.wsum += wi; m.n++;
   }));
-  const maxMonth = Math.max(...months.map((m) => m.total), 1);
-  months.forEach((m) => { m.x = Math.round((m.wsum / m.n) * 4 + 1); m.v = Math.sqrt(m.total / maxMonth); });
-  const busiest = [...months].sort((a, b) => b.total - a.total).slice(0, 3);
+  // bloom is absolute and log-scaled: a few commits make buds, FULL_MONTH or more is full bloom
+  months.forEach((m) => {
+    m.x = Math.round((m.wsum / m.n) * 4 + 1);
+    m.v = Math.min(1, Math.log1p(m.total) / Math.log1p(FULL_MONTH));
+  });
+  const busiest = [...months].filter((m) => m.total > 0).sort((a, b) => b.total - a.total).slice(0, 3);
 
   const lamps = [];
   // ---- static scene ----
@@ -223,7 +227,7 @@ export default function hanami(data, theme = 'day') {
   };
   const cats = [
     // busiest month: batting at a petal
-    sitCat(busiest[0], 0, (pal) => `<g class="paw"><path fill="${pal['#']}" d="M0 5h1v2h-1z"/><path fill="#f8a8c4" d="M-1 3h1v1h-1z"/></g>`),
+    busiest[0] ? sitCat(busiest[0], 0, (pal) => `<g class="paw"><path fill="${pal['#']}" d="M0 5h1v2h-1z"/><path fill="#f8a8c4" d="M-1 3h1v1h-1z"/></g>`) : '',
     // second: asleep in a loaf
     busiest[1] ? `<g transform="translate(${busiest[1].x + 4} ${GROUND - 5})">${draw(12, 6, (c) => c.sprite(0, 0, CAT_LOAF, { ...COATS[1], u: '#3a2a2a' }))}<g class="zz" transform="translate(-3 -4)">${draw(3, 3, (c) => c.sprite(0, 0, ZZZ, { '#': '#8a86b8' }))}</g></g>` : '',
     // third: just watching, tail flicking
@@ -241,12 +245,12 @@ export default function hanami(data, theme = 'day') {
 
   const bw = data.weeks.findIndex((w) => w.some((d) => d.date === data.bestDay.date));
   const sx = Math.min(PW - 8, Math.max(0, bw * 4 - 2)), sy = GRID_Y + data.bestDay.weekday * 4 - 5;
-  const spirit = `<g transform="translate(${sx} ${sy})"><g class="hop">${draw(7, 6, (c) => c.sprite(0, 0, SPIRIT, { '#': '#fffdf5', e: '#3a2a2a', c: '#ffb3c7', g: '#5fae5a' }))}</g></g>`;
+  const spirit = data.bestDay.count === 0 ? '' : `<g transform="translate(${sx} ${sy})"><g class="hop">${draw(7, 6, (c) => c.sprite(0, 0, SPIRIT, { '#': '#fffdf5', e: '#3a2a2a', c: '#ffb3c7', g: '#5fae5a' }))}</g></g>`;
 
   // petals fall from the trees that are actually in bloom
   const bloom = months.filter((m) => m.total > 0);
   let petals = '';
-  for (let i = 0; i < 44; i++) {
+  for (let i = 0; i < (bloom.length ? 44 : 0); i++) {
     let pick = r() * bloom.reduce((a, m) => a + m.v, 0), m = bloom[0];
     for (const b of bloom) { pick -= b.v; if (pick <= 0) { m = b; break; } }
     const x = Math.round(m.x + (r() - 0.5) * 16), y = Math.round(GROUND - 16 - m.v * 12 + r() * 8);
