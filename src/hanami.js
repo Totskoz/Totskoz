@@ -2,6 +2,7 @@
 // commits), the calendar is a petal-strewn lawn, cats nap under the three busiest months,
 // and a little sprout spirit bounces on your single best day.
 import { rng, fmt, MONTHS } from './lib.js';
+import { THEMES, paletteMap } from './themes.js';
 
 const PW = 212, PH = 91, S = 4; // pixel grid, scale
 const GROUND = 55, GRID_Y = 62;
@@ -114,8 +115,15 @@ const recolor = (svg, map) => svg.replace(/fill="(#[0-9a-f]{6})"/g, (m, c) => `f
 const FULL_MONTH = 600;
 const LAWN = ['#6fb86c', '#fbd9e5', '#f8b1c9', '#ef82aa', '#d9548b'];
 
-export default function hanami(data, theme = 'day') {
-  const night = theme === 'night';
+// hanami(data)                       → Mochi Sakura
+// hanami(data, { theme: 'wisteria' }) → any theme in themes.js
+// hanami(data, 'night')              → the night draft (sakura only)
+export default function hanami(data, opts = {}) {
+  if (typeof opts === 'string') opts = { night: opts === 'night' };
+  const night = !!opts.night;
+  const theme = THEMES[opts.theme || 'sakura'];
+  if (!theme) throw new Error(`unknown theme "${opts.theme}" (have: ${Object.keys(THEMES).join(', ')})`);
+  const pal = night ? {} : paletteMap(theme.palette); // night recolours the original colours instead
   const r = rng(52);
 
   // months → trees
@@ -134,8 +142,8 @@ export default function hanami(data, theme = 'day') {
   const busiest = [...months].filter((m) => m.total > 0).sort((a, b) => b.total - a.total).slice(0, 3);
 
   const lamps = [];
-  // ---- static scene ----
-  const scene = draw(PW, PH, (c) => {
+  // ---- static scene: background, the theme's plants, then lawn and title on top ----
+  const background = draw(PW, PH, (c) => {
     // banded sky with dithered seams
     const bands = [['#bfe4f6', 9], ['#cdeaf7', 9], ['#dff0f8', 9], ['#f1eef6', 9], ['#fbe6ee', 9], ['#fcd8e4', 10]];
     let y = 0;
@@ -148,9 +156,9 @@ export default function hanami(data, theme = 'day') {
     // sun
     for (let j = -7; j <= 7; j++) for (let i = -7; i <= 7; i++) if (i * i + j * j <= 50) c.px(150 + i, 14 + j, i * i + j * j <= 30 ? '#fffbe6' : '#fff3c9');
     // far mountain with snow cap
-    for (let j = 0; j < 30; j++) {
-      const half = Math.round(j * 1.5 + (j > 6 ? Math.sin(j) * 1.2 : 0));
-      for (let i = -half; i <= half; i++) c.px(118 + i, 26 + j, j < 6 + (Math.abs(i) % 3) ? '#ffffff' : i > half * 0.2 ? '#aaa6d6' : '#bcb8e2');
+    for (let j = 0; j < 40; j++) {
+      const half = Math.round(j * 1.55 + (j > 8 ? Math.sin(j * 0.8) * 1.4 : 0));
+      for (let i = -half; i <= half; i++) c.px(118 + i, 16 + j, j < 8 + (Math.abs(i) % 3) ? '#ffffff' : i > half * 0.2 ? '#aaa6d6' : '#bcb8e2');
     }
     // rolling hills + hedge
     for (let x = 0; x < PW; x++) {
@@ -163,31 +171,11 @@ export default function hanami(data, theme = 'day') {
     c.rect(0, GROUND, PW, GRID_Y - GROUND, '#7cc47a');
     c.rect(0, GROUND, PW, 1, '#a4dd97');
     for (let i = 0; i < 26; i++) c.px(r() * PW, GROUND + 1, r() < 0.4 ? '#fbd9e5' : '#6ab36b');
+  });
 
-    // trees
-    for (const m of months) {
-      const th = Math.round(8 + m.v * 6), top = GROUND - th;
-      c.rect(m.x, top, 2, th + 1, '#7a4a3a');
-      c.rect(m.x + 1, top + 2, 1, th - 1, '#5c3528');
-      // fork
-      c.px(m.x - 1, top, '#7a4a3a'); c.px(m.x - 2, top - 1, '#7a4a3a'); c.px(m.x - 3, top - 2, '#7a4a3a');
-      c.px(m.x + 2, top, '#5c3528'); c.px(m.x + 3, top - 1, '#5c3528'); c.px(m.x + 4, top - 3, '#5c3528'); c.px(m.x + 3, top - 2, '#5c3528');
-      c.px(m.x, top - 1, '#7a4a3a'); c.px(m.x, top - 2, '#7a4a3a');
-      if (m.total === 0) continue;
-      if (night && m.v > 0.25) lamps.push([m.x - 3, top - 1]);
-      const R = 2.6 + m.v * 6.4, cy = top - R * 0.55;
-      const blobs = [[0.5, 0, 1], [-R * 0.62, R * 0.32, 0.68], [R * 0.66, R * 0.3, 0.7], [R * 0.15, -R * 0.5, 0.66]];
-      for (const [bx, by, k] of blobs) {
-        const rr = R * k;
-        for (let j = -Math.ceil(rr); j <= Math.ceil(rr); j++) for (let i = -Math.ceil(rr); i <= Math.ceil(rr); i++) {
-          const dd = (i * i + j * j) / (rr * rr);
-          if (dd > 1) continue;
-          const light = (-i * 0.6 - j * 0.8) / rr + (r() - 0.5) * 0.5;
-          const col = r() < 0.05 ? '#fff4f8' : light > 0.32 ? '#ffd9e6' : light < -0.4 ? '#e0749f' : '#f8a8c4';
-          c.px(m.x + bx + i, cy + by + j, dd > 0.86 && light < -0.2 ? '#c95a8a' : col);
-        }
-      }
-    }
+  const plants = draw(PW, PH, (c) => theme.trees({ c, months, r, G: GROUND, PW, night, lamps }));
+
+  const foreground = draw(PW, PH, (c) => {
     // months with no bloom still get a label
     let lastRight = -9;
     for (const m of months) {
@@ -225,16 +213,18 @@ export default function hanami(data, theme = 'day') {
     const blink = `<path class="blink k${i}" fill="${pal['#']}" d="M2 3h1v1h-1zM6 3h1v1h-1z"/>`;
     return `<g transform="translate(${m.x + 4} ${GROUND - 9})">${body}${tails}${blink}${extra(pal)}</g>`;
   };
+  const fallCols = night && theme.fall.night ? theme.fall.night : theme.fall.colors;
   const cats = [
     // busiest month: batting at a petal
-    busiest[0] ? sitCat(busiest[0], 0, (pal) => `<g class="paw"><path fill="${pal['#']}" d="M0 5h1v2h-1z"/><path fill="#f8a8c4" d="M-1 3h1v1h-1z"/></g>`) : '',
+    busiest[0] ? sitCat(busiest[0], 0, (pal) => `<g class="paw"><path fill="${pal['#']}" d="M0 5h1v2h-1z"/><path fill="${fallCols[1]}" d="M-1 3h1v1h-1z"/></g>`) : '',
     // second: asleep in a loaf
     busiest[1] ? `<g transform="translate(${busiest[1].x + 4} ${GROUND - 5})">${draw(12, 6, (c) => c.sprite(0, 0, CAT_LOAF, { ...COATS[1], u: '#3a2a2a' }))}<g class="zz" transform="translate(-3 -4)">${draw(3, 3, (c) => c.sprite(0, 0, ZZZ, { '#': '#8a86b8' }))}</g></g>` : '',
     // third: just watching, tail flicking
     busiest[2] ? sitCat(busiest[2], 2, () => '') : '',
   ].join('');
 
-  const flock = [[0, 3], [8, 7], [15, 1], [24, 6]].map(([x, y]) => `<g transform="translate(${x} ${y})"><g class="fa">${draw(5, 3, (c) => c.sprite(0, 0, BIRD_A, { '#': '#7a74a6' }))}</g><g class="fb">${draw(5, 3, (c) => c.sprite(0, 0, BIRD_B, { '#': '#7a74a6' }))}</g></g>`).join('');
+  const bird = pal['#7a74a6'] || '#7a74a6';
+  const flock = [[0, 3], [8, 7], [15, 1], [24, 6]].map(([x, y]) => `<g transform="translate(${x} ${y})"><g class="fa">${draw(5, 3, (c) => c.sprite(0, 0, BIRD_A, { '#': bird }))}</g><g class="fb">${draw(5, 3, (c) => c.sprite(0, 0, BIRD_B, { '#': bird }))}</g></g>`).join('');
   const birds = `<g class="birds">${flock}</g>`;
   const fly = (cls, x, y, col) => `<g transform="translate(${x} ${y})"><g class="${cls}"><g class="fa">${draw(3, 2, (c) => c.sprite(0, 0, FLY_A, { '#': col }))}</g><g class="fb">${draw(3, 2, (c) => c.sprite(0, 0, FLY_B, { '#': col }))}</g></g></g>`;
   const quiet = months.filter((m) => m.x > 30 && m.x < 150);
@@ -247,14 +237,23 @@ export default function hanami(data, theme = 'day') {
   const sx = Math.min(PW - 8, Math.max(0, bw * 4 - 2)), sy = GRID_Y + data.bestDay.weekday * 4 - 5;
   const spirit = data.bestDay.count === 0 ? '' : `<g transform="translate(${sx} ${sy})"><g class="hop">${draw(7, 6, (c) => c.sprite(0, 0, SPIRIT, { '#': '#fffdf5', e: '#3a2a2a', c: '#ffb3c7', g: '#5fae5a' }))}</g></g>`;
 
-  // petals fall from the trees that are actually in bloom
+  // petals / leaves fall from the plants that are actually in bloom; the rainy theme gets a drizzle
   const bloom = months.filter((m) => m.total > 0);
   let petals = '';
-  for (let i = 0; i < (bloom.length ? 44 : 0); i++) {
+  if (theme.fall.rain) {
+    for (let i = 0; i < 40; i++) {
+      const x = Math.round(r() * (PW + 20)), y = Math.round(r() * 30);
+      petals += `<rect class="rn" x="${x}" y="${y}" width="1" height="2" fill="${fallCols[i % 2]}" style="animation-delay:-${(r() * 1.6).toFixed(2)}s"/>`;
+    }
+  } else for (let i = 0; i < (bloom.length ? 44 : 0); i++) {
     let pick = r() * bloom.reduce((a, m) => a + m.v, 0), m = bloom[0];
     for (const b of bloom) { pick -= b.v; if (pick <= 0) { m = b; break; } }
-    const x = Math.round(m.x + (r() - 0.5) * 16), y = Math.round(GROUND - 16 - m.v * 12 + r() * 8);
-    petals += `<rect class="f${i % 4}" x="${x}" y="${y}" width="1" height="1" fill="${r() < 0.4 ? '#fff4f8' : '#f8a8c4'}" style="animation-delay:-${(r() * 12).toFixed(1)}s"/>`;
+    const x = Math.round(m.x + (r() - 0.5) * 16);
+    const y = Math.round((theme.fall.from ? theme.fall.from(GROUND) : GROUND - 16 - m.v * 12) + r() * 8);
+    const fill = fallCols[r() < 0.4 ? 0 : 1], delay = `style="animation-delay:-${(r() * 12).toFixed(1)}s"`;
+    petals += theme.fall.leaf // a tiny ginkgo fan: two pixels wide, one-pixel stem
+      ? `<path class="f${i % 4}" d="M${x} ${y}h2v1h-2zM${x + 1} ${y + 1}h1v1h-1z" fill="${fill}" ${delay}/>`
+      : `<rect class="f${i % 4}" x="${x}" y="${y}" width="1" height="1" fill="${fill}" ${delay}/>`;
   }
 
   const lanterns = lamps.map(([x, y], i) => `<g transform="translate(${x} ${y})"><rect class="glow g${i % 3}" x="-3" y="-2" width="8" height="8" fill="#ffb14a" opacity=".22"/><path fill="#5a3a2a" d="M0 0h2v1h-2z"/><path fill="#ffd27a" d="M0 1h2v2h-2z"/><path fill="#ff8a3c" d="M0 3h2v1h-2z"/></g>`).join('');
@@ -262,7 +261,7 @@ export default function hanami(data, theme = 'day') {
 
   const cloud = `<g class="cloud" transform="translate(0 20)">${draw(13, 5, (c) => c.sprite(0, 0, CLOUD, { '#': '#ffffff' }))}</g>`;
 
-  const out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PW} ${PH}" width="${PW * S}" height="${PH * S}" role="img" aria-label="${data.login}'s year of commits as a pixel-art cherry blossom park with cats">
+  const out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PW} ${PH}" width="${PW * S}" height="${PH * S}" role="img" aria-label="${data.login}'s year of commits as a pixel-art ${theme.name} park with cats">
 <defs><clipPath id="card"><rect width="${PW}" height="${PH}" rx="2"/></clipPath></defs>
 <style>
   .f0,.f1,.f2,.f3{animation:fall0 9s steps(36) infinite}
@@ -292,11 +291,15 @@ export default function hanami(data, theme = 'day') {
   .glow{animation:glow 2.4s steps(3) infinite}.tw{animation:glow 3.3s steps(2) infinite}.g1{animation-delay:-.8s}.g2{animation-delay:-1.6s}
   @keyframes glow{50%{opacity:.08}}
   .cloud{animation:cloud 110s steps(240) infinite}
-  @keyframes cloud{0%{transform:translate(92px,27px);opacity:0}6%{opacity:1}100%{transform:translate(${PW + 4}px,27px);opacity:1}}
+  @keyframes cloud{0%{transform:translate(92px,11px);opacity:0}6%{opacity:1}100%{transform:translate(${PW + 4}px,11px);opacity:1}}
+  .rn{animation:rain 1.6s steps(16) infinite}
+  @keyframes rain{0%{transform:translate(0,0);opacity:0}10%{opacity:.85}90%{opacity:.85}100%{transform:translate(-8px,32px);opacity:0}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important}.fb,.tb{opacity:0}}
 </style>
 <g clip-path="url(#card)">
-${scene}
+${recolor(background, pal)}
+${plants}
+${recolor(foreground, pal)}
 ${twinkles}
 ${cloud}
 ${birds}
